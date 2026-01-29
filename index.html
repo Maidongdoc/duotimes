@@ -112,6 +112,26 @@
     if (min > 0) createTimer(min * 60);
   }
 
+  function notifyFinish(timerName) {
+    if (!('speechSynthesis' in window)) return;
+    const text = `${timerName} 时间到`;
+    let count = 0;
+    function speakOnce() {
+      if (count >= 3) return;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'zh-CN';
+      utter.rate = 1;
+      utter.pitch = 1;
+      utter.volume = 1;
+      utter.onend = () => {
+        count++;
+        setTimeout(speakOnce, 400);
+      };
+      window.speechSynthesis.speak(utter);
+    }
+    speakOnce();
+  }
+
   function createTimer(initialSeconds, name = '任务名称', autoRun = false) {
     let remaining = initialSeconds;
     let endTime = null;
@@ -164,6 +184,7 @@
         stop();
         el.classList.add('finished');
         doneLabel.style.display = 'block';
+        notifyFinish(nameEl.value || '计时器');
         render();
         return;
       }
