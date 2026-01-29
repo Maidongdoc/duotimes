@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <link rel="manifest" href="manifest.json">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>多倒计时</title>
+  <title>倒计时</title>
+
+  <!-- PWA Manifest（可选，但推荐） -->
+  <link rel="manifest" href="manifest.json" />
+
   <style>
     :root {
-      /* 莫兰迪暖中性色，贴近参考图 */
       --bg: #f2f0eb;
       --card: #ddcfbb;
       --card-muted: #dedbd2;
@@ -22,7 +24,8 @@
 
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "PingFang SC", "Microsoft YaHei", sans-serif;
       background: var(--bg);
       color: var(--text-main);
     }
@@ -39,7 +42,6 @@
       font-weight: 600;
     }
 
-    /* 快捷按钮（尽量一行放下） */
     .presets {
       display: flex;
       gap: 6px;
@@ -55,10 +57,8 @@
       border: none;
       cursor: pointer;
       white-space: nowrap;
-      line-height: 1;
     }
 
-    /* 倒计时卡片 */
     .timers {
       display: flex;
       flex-direction: column;
@@ -72,20 +72,12 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
       transition: background 0.25s ease;
     }
 
-    .timer.muted { background: var(--card-muted); }
-
     .timer.finished {
       background: var(--finished);
-    }
-
-    .done-label {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
     }
 
     .timer-main {
@@ -110,6 +102,13 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .done-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: none;
+    }
+
     .actions {
       display: flex;
       align-items: center;
@@ -126,6 +125,45 @@
       cursor: pointer;
       line-height: 1;
     }
+
+    /* 自定义输入弹层 */
+    #customModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.25);
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    #customModal .panel {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      width: 260px;
+    }
+
+    #customModal input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      margin-bottom: 12px;
+    }
+
+    #customModal .buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    #customModal button {
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -141,22 +179,23 @@
     </div>
 
     <div class="timers" id="timers"></div>
+  </div>
 
   <!-- 自定义分钟输入弹层 -->
-  <div id="customModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.25); align-items:center; justify-content:center; z-index:999;">
-    <div style="background:#fff; border-radius:16px; padding:16px; width:260px;">
-      <div style="font-size:14px; margin-bottom:10px; color:#2f2f2f;">输入分钟数</div>
-      <input id="customInput" type="number" min="1" placeholder="例如 25" style="width:100%; padding:8px 10px; border-radius:10px; border:1px solid #ddd; margin-bottom:12px;" />
-      <div style="display:flex; gap:10px; justify-content:flex-end;">
-        <button onclick="hideCustomModal()" style="padding:6px 12px; border-radius:10px; border:none;">取消</button>
-        <button onclick="confirmCustomModal()" style="padding:6px 12px; border-radius:10px; border:none; background:#c6b6aa;">确定</button>
+  <div id="customModal">
+    <div class="panel">
+      <div style="font-size: 14px; margin-bottom: 10px">输入分钟数</div>
+      <input id="customInput" type="number" min="1" placeholder="例如 25" />
+      <div class="buttons">
+        <button onclick="hideCustomModal()">取消</button>
+        <button onclick="confirmCustomModal()" style="background: var(--chip)">
+          确定
+        </button>
       </div>
     </div>
   </div>
 
-<script>
-    // 说明：这里用的是“真实时间补偿”的倒计时方式，避免切屏后看起来暂停。
-
+  <script>
     const timersEl = document.getElementById('timers');
     let audioCtx = null;
 
@@ -167,134 +206,12 @@
       return `${m}:${s}`;
     }
 
-    // 全局函数：供按钮 onclick 调用
     function addTimerFromMinutes(min) {
       createTimer(min * 60);
     }
 
-    // 全局函数：供按钮 onclick 调用
     function addCustom() {
-      // 一些移动浏览器（如部分国产浏览器）会直接屏蔽 prompt
-      // 这里使用一个极简的自定义弹层，保证“自定义”在所有环境可用
       showCustomModal();
-    }
-
-    function createTimer(seconds) {
-      // 到点提示音（需要用户曾经交互过）
-      function notifyFinish() {
-        try {
-          if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          }
-          const ctx = audioCtx;
-          const o = ctx.createOscillator();
-          const g = ctx.createGain();
-
-          o.type = 'sine';
-          o.frequency.value = 880;
-          g.gain.value = 0.0001;
-
-          o.connect(g);
-          g.connect(ctx.destination);
-
-          o.start();
-          g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.02);
-          g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
-          o.stop(ctx.currentTime + 1.2);
-        } catch {
-          // 忽略：少数环境可能不支持 AudioContext
-        }
-      }
-
-      let remaining = Math.max(0, Math.floor(seconds));
-      let interval = null;
-      let lastTick = null; // 用于后台补偿
-
-      const el = document.createElement('div');
-      el.className = 'timer';
-
-      el.innerHTML = `
-        <div class="timer-main">
-          <input class="name" value="任务名称" />
-          <div class="time">${formatTime(remaining)}</div>
-          <div class="done-label" style="display:none;">完成 ✓</div>
-        </div>
-        <div class="actions">
-          <button class="action-btn play" aria-label="开始/暂停">▶</button>
-          <button class="action-btn reset" aria-label="重置">↺</button>
-          <button class="action-btn delete" aria-label="删除">✕</button>
-        </div>
-      `;
-
-      const timeEl = el.querySelector('.time');
-      const doneLabel = el.querySelector('.done-label');
-      const playBtn = el.querySelector('.play');
-      const resetBtn = el.querySelector('.reset');
-      const delBtn = el.querySelector('.delete');
-
-      function render() {
-        timeEl.textContent = formatTime(remaining);
-        el.classList.toggle('muted', interval === null && remaining === seconds);
-      }
-
-      function stop() {
-        if (interval) clearInterval(interval);
-        interval = null;
-        lastTick = null;
-        playBtn.textContent = '▶';
-      }
-
-      function tick() {
-        const now = Date.now();
-        if (lastTick) {
-          const diff = Math.floor((now - lastTick) / 1000);
-          if (diff > 0) remaining -= diff;
-        }
-        lastTick = now;
-
-        if (remaining <= 0) {
-          remaining = 0;
-          stop();
-          el.classList.add('finished');
-          doneLabel.style.display = 'block';
-          render();
-          notifyFinish();
-          return;
-        }
-        render();
-      }
-
-      function start() {
-        if (interval) return;
-        if (remaining <= 0) return;
-        lastTick = Date.now();
-        interval = setInterval(tick, 1000);
-        playBtn.textContent = '⏸';
-      }
-
-      playBtn.onclick = () => {
-        if (interval) {
-          stop();
-        } else {
-          start();
-        }
-      };
-
-      resetBtn.onclick = () => {
-        remaining = Math.max(0, Math.floor(seconds));
-        el.classList.remove('finished');
-        doneLabel.style.display = 'none';
-        stop();
-        render();
-      };
-
-      delBtn.onclick = () => {
-        stop();
-        el.remove();
-      };
-
-      timersEl.prepend(el);
-      render();
     }
 
     function showCustomModal() {
@@ -312,31 +229,111 @@
     function confirmCustomModal() {
       const input = document.getElementById('customInput');
       const min = parseInt(input.value, 10);
-      if (!Number.isFinite(min) || min <= 0) {
-        hideCustomModal();
-        return;
-      }
-      createTimer(min * 60);
       hideCustomModal();
+      if (!Number.isFinite(min) || min <= 0) return;
+      createTimer(min * 60);
+    }
+
+    function notifyFinish() {
+      try {
+        if (!audioCtx)
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = audioCtx;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 880;
+        g.gain.value = 0.0001;
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start();
+        g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+        o.stop(ctx.currentTime + 1.2);
+      } catch {}
+    }
+
+    function createTimer(totalSeconds) {
+      const duration = Math.max(0, Math.floor(totalSeconds));
+      let endTime = null;
+      let interval = null;
+
+      const el = document.createElement('div');
+      el.className = 'timer';
+
+      el.innerHTML = `
+        <div class="timer-main">
+          <input class="name" value="任务名称" />
+          <div class="time">${formatTime(duration)}</div>
+          <div class="done-label">完成 ✓</div>
+        </div>
+        <div class="actions">
+          <button class="action-btn play">▶</button>
+          <button class="action-btn reset">↺</button>
+          <button class="action-btn delete">✕</button>
+        </div>`;
+
+      const timeEl = el.querySelector('.time');
+      const doneLabel = el.querySelector('.done-label');
+      const playBtn = el.querySelector('.play');
+      const resetBtn = el.querySelector('.reset');
+      const delBtn = el.querySelector('.delete');
+
+      function render(remaining) {
+        timeEl.textContent = formatTime(remaining);
+      }
+
+      function stop() {
+        if (interval) clearInterval(interval);
+        interval = null;
+        playBtn.textContent = '▶';
+      }
+
+      function tick() {
+        if (!endTime) return;
+        const remaining = Math.ceil((endTime - Date.now()) / 1000);
+        if (remaining <= 0) {
+          stop();
+          render(0);
+          el.classList.add('finished');
+          doneLabel.style.display = 'block';
+          notifyFinish();
+          endTime = null;
+          return;
+        }
+        render(remaining);
+      }
+
+      function start() {
+        if (interval) return;
+        endTime = Date.now() + duration * 1000;
+        el.classList.remove('finished');
+        doneLabel.style.display = 'none';
+        playBtn.textContent = '⏸';
+        interval = setInterval(tick, 250);
+      }
+
+      playBtn.onclick = () => (interval ? stop() : start());
+
+      resetBtn.onclick = () => {
+        stop();
+        endTime = null;
+        el.classList.remove('finished');
+        doneLabel.style.display = 'none';
+        render(duration);
+      };
+
+      delBtn.onclick = () => {
+        stop();
+        el.remove();
+      };
+
+      timersEl.prepend(el);
+      render(duration);
     }
 
     // 默认一个 30 分钟
     addTimerFromMinutes(30);
-
-    // --- Minimal tests (open page with #test and check console) ---
-    function runTests() {
-      const assert = (cond, msg) => { if (!cond) throw new Error(`Test failed: ${msg}`); };
-      assert(formatTime(0) === '00:00', 'formatTime(0)');
-      assert(formatTime(61) === '01:01', 'formatTime(61)');
-      assert(formatTime(-5) === '00:00', 'formatTime clamps negatives');
-
-      // Ensure global handlers exist for inline onclick
-      assert(typeof window.addCustom === 'function', 'addCustom is global');
-      assert(typeof window.addTimerFromMinutes === 'function', 'addTimerFromMinutes is global');
-
-      console.log('✅ All tests passed');
-    }
-    if (location.hash === '#test') runTests();
   </script>
 </body>
 </html>
