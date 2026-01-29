@@ -112,7 +112,44 @@
     if (min > 0) createTimer(min * 60);
   }
 
+  // === 语音提醒（移动端兼容处理）===
+  let speechUnlocked = false;
+
+  function unlockSpeech() {
+    if (speechUnlocked) return;
+    try {
+      const utter = new SpeechSynthesisUtterance('');
+      window.speechSynthesis.speak(utter);
+      speechUnlocked = true;
+    } catch {}
+  }
+
   function notifyFinish(timerName) {
+    if (!('speechSynthesis' in window)) return;
+    if (!speechUnlocked) return; // 未解锁时不播报（避免移动端静默失败）
+
+    const text = `${timerName} 时间到`;
+    let count = 0;
+
+    function speakOnce() {
+      if (count >= 3) return;
+      window.speechSynthesis.cancel(); // iOS 关键：防止被吞
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'zh-CN';
+      utter.rate = 1;
+      utter.pitch = 1;
+      utter.volume = 1;
+      utter.onend = () => {
+        count++;
+        setTimeout(speakOnce, 400);
+      };
+      window.speechSynthesis.speak(utter);
+    }
+
+    speakOnce();
+  }
+
+  function createTimer((timerName) {
     if (!('speechSynthesis' in window)) return;
     const text = `${timerName} 时间到`;
     let count = 0;
@@ -202,7 +239,10 @@
       interval = setInterval(tick, 250);
     }
 
-    playBtn.onclick = () => interval ? stop() : start();
+    playBtn.onclick = () => {
+      unlockSpeech(); // ▶ 第一次用户交互时解锁语音（移动端必须）
+      interval ? stop() : start();
+    };
     el.querySelector('.reset').onclick = () => { stop(); remaining = initialSeconds; render(); };
     el.querySelector('.delete').onclick = () => { stop(); el.remove(); saveTimers(); };
 
