@@ -4,24 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>倒计时</title>
-
-  <!-- PWA Manifest（可选，但推荐） -->
   <link rel="manifest" href="manifest.json" />
-
   <style>
     :root {
       --bg: #f2f0eb;
       --card: #ddcfbb;
-      --card-muted: #dedbd2;
       --chip: #c6b6aa;
       --text-main: #2f2f2f;
       --text-muted: #7a7a7a;
       --accent: #ffffff;
       --finished: #efe5d6;
     }
-
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -29,147 +23,26 @@
       background: var(--bg);
       color: var(--text-main);
     }
-
-    .container {
-      max-width: 420px;
-      margin: 0 auto;
-      padding: 16px 14px 40px;
-    }
-
-    h1 {
-      font-size: 22px;
-      margin: 8px 0 14px;
-      font-weight: 600;
-    }
-
-    .presets {
-      display: flex;
-      gap: 6px;
-      flex-wrap: nowrap;
-      margin-bottom: 14px;
-    }
-
-    .chip {
-      padding: 6px 10px;
-      border-radius: 12px;
-      background: var(--chip);
-      font-size: 12px;
-      border: none;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .timers {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .timer {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 12px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-      transition: background 0.25s ease;
-    }
-
-    .timer.finished {
-      background: var(--finished);
-    }
-
-    .timer-main {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .name {
-      font-size: 14px;
-      color: var(--text-muted);
-      border: none;
-      background: transparent;
-      outline: none;
-      width: 100%;
-      margin-bottom: 6px;
-    }
-
-    .time {
-      font-size: 30px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .done-label {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      display: none;
-    }
-
-    .actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .action-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      border: none;
-      background: var(--accent);
-      font-size: 18px;
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    /* 自定义输入弹层 */
-    #customModal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.25);
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-    }
-
-    #customModal .panel {
-      background: #fff;
-      border-radius: 16px;
-      padding: 16px;
-      width: 260px;
-    }
-
-    #customModal input {
-      width: 100%;
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      margin-bottom: 12px;
-    }
-
-    #customModal .buttons {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    #customModal button {
-      padding: 6px 12px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-    }
+    .container { max-width: 420px; margin: 0 auto; padding: 16px 14px 40px; }
+    h1 { font-size: 22px; margin: 8px 0 14px; font-weight: 600; }
+    .presets { display: flex; gap: 6px; margin-bottom: 14px; }
+    .chip { padding: 6px 10px; border-radius: 12px; background: var(--chip); font-size: 12px; border: none; cursor: pointer; }
+    .timers { display: flex; flex-direction: column; gap: 12px; }
+    .timer { background: var(--card); border-radius: 16px; padding: 12px; display: flex; gap: 12px; box-shadow: 0 4px 10px rgba(0,0,0,.05); }
+    .timer.finished { background: var(--finished); }
+    .timer-main { flex: 1; }
+    .name { font-size: 14px; color: var(--text-muted); border: none; background: transparent; width: 100%; margin-bottom: 6px; }
+    .time { font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .done-label { font-size: 12px; color: var(--text-muted); display: none; }
+    .actions { display: flex; gap: 10px; }
+    .action-btn { width: 44px; height: 44px; border-radius: 14px; border: none; background: var(--accent); font-size: 18px; cursor: pointer; }
+    #customModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.25); align-items:center; justify-content:center; }
+    #customModal .panel { background:#fff; border-radius:16px; padding:16px; width:260px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>倒计时</h1>
-
     <div class="presets">
       <button class="chip" onclick="addTimerFromMinutes(5)">5 min</button>
       <button class="chip" onclick="addTimerFromMinutes(15)">15 min</button>
@@ -177,163 +50,158 @@
       <button class="chip" onclick="addTimerFromMinutes(30)">30 min</button>
       <button class="chip" onclick="addCustom()">自定义</button>
     </div>
-
     <div class="timers" id="timers"></div>
   </div>
 
-  <!-- 自定义分钟输入弹层 -->
   <div id="customModal">
     <div class="panel">
-      <div style="font-size: 14px; margin-bottom: 10px">输入分钟数</div>
-      <input id="customInput" type="number" min="1" placeholder="例如 25" />
-      <div class="buttons">
+      <div style="margin-bottom:8px">输入分钟数</div>
+      <input id="customInput" type="number" min="1" />
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px">
         <button onclick="hideCustomModal()">取消</button>
-        <button onclick="confirmCustomModal()" style="background: var(--chip)">
-          确定
-        </button>
+        <button onclick="confirmCustomModal()">确定</button>
       </div>
     </div>
   </div>
 
-  <script>
-    const timersEl = document.getElementById('timers');
-    let audioCtx = null;
+<script>
+  const timersEl = document.getElementById('timers');
+  const STORAGE_KEY = 'countdown_timers_v1';
 
-    function formatTime(sec) {
-      const safe = Math.max(0, Math.floor(sec));
-      const m = String(Math.floor(safe / 60)).padStart(2, '0');
-      const s = String(safe % 60).padStart(2, '0');
-      return `${m}:${s}`;
+  function formatTime(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    const m = String(Math.floor(sec / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function saveTimers() {
+    const data = [];
+    document.querySelectorAll('.timer').forEach(el => {
+      data.push({
+        name: el._name.value,
+        remaining: el._remaining,
+        running: el._running
+      });
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function loadTimers() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+      JSON.parse(raw).forEach(t => {
+        createTimer(t.remaining, t.name, t.running);
+      });
+    } catch {}
+  }
+
+  function addTimerFromMinutes(min) { createTimer(min * 60); }
+  function addCustom() { showCustomModal(); }
+
+  function showCustomModal() {
+    customModal.style.display = 'flex';
+    customInput.value = '';
+    customInput.focus();
+  }
+  function hideCustomModal() { customModal.style.display = 'none'; }
+  function confirmCustomModal() {
+    const min = parseInt(customInput.value, 10);
+    hideCustomModal();
+    if (min > 0) createTimer(min * 60);
+  }
+
+  function createTimer(initialSeconds, name = '任务名称', autoRun = false) {
+    let remaining = initialSeconds;
+    let endTime = null;
+    let interval = null;
+
+    const el = document.createElement('div');
+    el.className = 'timer';
+
+    el.innerHTML = `
+      <div class="timer-main">
+        <input class="name" />
+        <div class="time"></div>
+        <div class="done-label">完成 ✓</div>
+      </div>
+      <div class="actions">
+        <button class="action-btn play">▶</button>
+        <button class="action-btn reset">↺</button>
+        <button class="action-btn delete">✕</button>
+      </div>`;
+
+    const nameEl = el.querySelector('.name');
+    const timeEl = el.querySelector('.time');
+    const doneLabel = el.querySelector('.done-label');
+    const playBtn = el.querySelector('.play');
+
+    nameEl.value = name;
+    timeEl.textContent = formatTime(remaining);
+
+    el._name = nameEl;
+    el._remaining = remaining;
+    el._running = false;
+
+    function render() {
+      timeEl.textContent = formatTime(remaining);
+      el._remaining = remaining;
+      saveTimers();
     }
 
-    function addTimerFromMinutes(min) {
-      createTimer(min * 60);
+    function stop() {
+      if (interval) clearInterval(interval);
+      interval = null;
+      el._running = false;
+      playBtn.textContent = '▶';
     }
 
-    function addCustom() {
-      showCustomModal();
-    }
-
-    function showCustomModal() {
-      const modal = document.getElementById('customModal');
-      const input = document.getElementById('customInput');
-      input.value = '';
-      modal.style.display = 'flex';
-      input.focus();
-    }
-
-    function hideCustomModal() {
-      document.getElementById('customModal').style.display = 'none';
-    }
-
-    function confirmCustomModal() {
-      const input = document.getElementById('customInput');
-      const min = parseInt(input.value, 10);
-      hideCustomModal();
-      if (!Number.isFinite(min) || min <= 0) return;
-      createTimer(min * 60);
-    }
-
-    function notifyFinish() {
-      try {
-        if (!audioCtx)
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const ctx = audioCtx;
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'sine';
-        o.frequency.value = 880;
-        g.gain.value = 0.0001;
-        o.connect(g);
-        g.connect(ctx.destination);
-        o.start();
-        g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
-        o.stop(ctx.currentTime + 1.2);
-      } catch {}
-    }
-
-    function createTimer(totalSeconds) {
-      const duration = Math.max(0, Math.floor(totalSeconds));
-      let endTime = null;
-      let interval = null;
-
-      const el = document.createElement('div');
-      el.className = 'timer';
-
-      el.innerHTML = `
-        <div class="timer-main">
-          <input class="name" value="任务名称" />
-          <div class="time">${formatTime(duration)}</div>
-          <div class="done-label">完成 ✓</div>
-        </div>
-        <div class="actions">
-          <button class="action-btn play">▶</button>
-          <button class="action-btn reset">↺</button>
-          <button class="action-btn delete">✕</button>
-        </div>`;
-
-      const timeEl = el.querySelector('.time');
-      const doneLabel = el.querySelector('.done-label');
-      const playBtn = el.querySelector('.play');
-      const resetBtn = el.querySelector('.reset');
-      const delBtn = el.querySelector('.delete');
-
-      function render(remaining) {
-        timeEl.textContent = formatTime(remaining);
-      }
-
-      function stop() {
-        if (interval) clearInterval(interval);
-        interval = null;
-        playBtn.textContent = '▶';
-      }
-
-      function tick() {
-        if (!endTime) return;
-        const remaining = Math.ceil((endTime - Date.now()) / 1000);
-        if (remaining <= 0) {
-          stop();
-          render(0);
-          el.classList.add('finished');
-          doneLabel.style.display = 'block';
-          notifyFinish();
-          endTime = null;
-          return;
-        }
-        render(remaining);
-      }
-
-      function start() {
-        if (interval) return;
-        endTime = Date.now() + duration * 1000;
-        el.classList.remove('finished');
-        doneLabel.style.display = 'none';
-        playBtn.textContent = '⏸';
-        interval = setInterval(tick, 250);
-      }
-
-      playBtn.onclick = () => (interval ? stop() : start());
-
-      resetBtn.onclick = () => {
+    function tick() {
+      const left = Math.ceil((endTime - Date.now()) / 1000);
+      if (left <= 0) {
+        remaining = 0;
         stop();
-        endTime = null;
-        el.classList.remove('finished');
-        doneLabel.style.display = 'none';
-        render(duration);
-      };
-
-      delBtn.onclick = () => {
-        stop();
-        el.remove();
-      };
-
-      timersEl.prepend(el);
-      render(duration);
+        el.classList.add('finished');
+        doneLabel.style.display = 'block';
+        render();
+        return;
+      }
+      remaining = left;
+      render();
     }
 
-    // 默认一个 30 分钟
-    addTimerFromMinutes(30);
-  </script>
+    function start() {
+      if (interval) return;
+      endTime = Date.now() + remaining * 1000;
+      el.classList.remove('finished');
+      doneLabel.style.display = 'none';
+      el._running = true;
+      playBtn.textContent = '⏸';
+      interval = setInterval(tick, 250);
+    }
+
+    playBtn.onclick = () => interval ? stop() : start();
+    el.querySelector('.reset').onclick = () => { stop(); remaining = initialSeconds; render(); };
+    el.querySelector('.delete').onclick = () => { stop(); el.remove(); saveTimers(); };
+
+    timersEl.prepend(el);
+    render();
+
+    if (autoRun) start();
+  }
+
+  // 初始化
+  loadTimers();
+  if (!timersEl.children.length) addTimerFromMinutes(30);
+
+  // 测试
+  function runTests() {
+    console.assert(formatTime(61) === '01:01');
+    console.assert(formatTime(-1) === '00:00');
+    console.log('tests passed');
+  }
+  if (location.hash === '#test') runTests();
+</script>
 </body>
 </html>
